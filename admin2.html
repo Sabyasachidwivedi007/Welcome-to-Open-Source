@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Dashboard - Metro Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        background-color: #f4f8fb;
+        color: #333;
+        transition: background-color 0.3s, color 0.3s;
+    }
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #006d77;
+        color: white;
+        padding: 15px 25px;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+    header h1 {
+        font-size: 1.5rem;
+    }
+    .clock {
+        font-size: 1rem;
+    }
+    .dark-mode {
+        background-color: #1e1e1e;
+        color: #f4f8fb;
+    }
+    .dark-mode header {
+        background: #004b50;
+    }
+    .container {
+        padding: 20px;
+    }
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        transition: background 0.3s, color 0.3s;
+    }
+    .dark-mode .card {
+        background: #2e2e2e;
+    }
+    .card h3 {
+        margin: 0;
+        font-size: 1.2rem;
+    }
+    .trend {
+        font-size: 0.9rem;
+        color: #777;
+    }
+    .positive {
+        color: green;
+    }
+    .negative {
+        color: red;
+    }
+    .alerts, .train-status {
+        margin-top: 20px;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        text-align: left;
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+    }
+    .status-on-time {
+        color: green;
+        font-weight: bold;
+    }
+    .status-delayed {
+        color: red;
+        font-weight: bold;
+    }
+    .alert-critical {
+        color: red;
+        font-weight: bold;
+    }
+    .alert-warning {
+        color: orange;
+    }
+    .alert-normal {
+        color: green;
+    }
+    button {
+        padding: 8px 12px;
+        background: #006d77;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+</style>
+</head>
+<body>
+
+<header>
+    <h1>Admin Dashboard</h1>
+    <div class="header-right">
+        <span class="clock" id="clock"></span>
+        <button onclick="toggleDarkMode()">Toggle Dark/Light</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="stats">
+        <div class="card">
+            <h3>Total Passengers Today</h3>
+            <p>4,512</p>
+            <p class="trend positive">▲ 5% from yesterday</p>
+        </div>
+        <div class="card">
+            <h3>Avg Wait Time</h3>
+            <p>3.5 min</p>
+            <p class="trend negative">▼ 2% from yesterday</p>
+        </div>
+        <div class="card">
+            <h3>Revenue Today</h3>
+            <p>₹32,450</p>
+            <p class="trend positive">▲ 8% from yesterday</p>
+        </div>
+    </div>
+
+    <canvas id="trafficChart" height="100"></canvas>
+
+    <div class="alerts">
+        <h2>Live Alerts</h2>
+        <ul id="alertList"></ul>
+    </div>
+
+    <div class="train-status">
+        <h2>Train Status</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Train ID</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Delay</th>
+                </tr>
+            </thead>
+            <tbody id="trainStatusTable"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toLocaleTimeString();
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+    }
+
+    const ctx = document.getElementById('trafficChart').getContext('2d');
+    const trafficChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Today vs Last Week',
+                data: [320, 450, 400, 480, 500, 530, 550],
+                backgroundColor: 'rgba(0,109,119,0.2)',
+                borderColor: '#006d77',
+                borderWidth: 2
+            }]
+        }
+    });
+
+    const alertsData = [
+        { text: 'Train 14 delayed by 6 mins', priority: 'critical' },
+        { text: 'Crowd at Station A exceeding capacity', priority: 'warning' },
+        { text: 'All trains operational in Zone 3', priority: 'normal' }
+    ];
+    const alertList = document.getElementById('alertList');
+    alertsData.forEach(alert => {
+        const li = document.createElement('li');
+        li.innerText = alert.text;
+        li.classList.add(`alert-${alert.priority}`);
+        alertList.appendChild(li);
+    });
+
+    const trainData = [
+        { id: 'T14', location: 'Station A', status: 'Delayed', delay: '6 min' },
+        { id: 'T21', location: 'Station C', status: 'On Time', delay: '0 min' },
+        { id: 'T35', location: 'Station E', status: 'Delayed', delay: '3 min' }
+    ];
+    const trainTable = document.getElementById('trainStatusTable');
+    trainData.forEach(train => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${train.id}</td>
+            <td>${train.location}</td>
+            <td class="${train.status === 'On Time' ? 'status-on-time' : 'status-delayed'}">${train.status}</td>
+            <td>${train.delay}</td>
+        `;
+        trainTable.appendChild(row);
+    });
+
+    setInterval(() => {
+        console.log('Auto-refreshing data...');
+    }, 60000);
+</script>
+
+</body>
+</html>
